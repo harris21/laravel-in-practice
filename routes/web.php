@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Order;
+use App\Services\SalesReportService;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
@@ -18,6 +20,42 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::get('/reports', [ReportsController::class, 'index'])
     ->middleware(['auth'])
     ->name('reports');
+
+Route::get('/benchmark', function () {
+    echo "Testing with " . Order::count() . " orders\n";
+    echo "Hardware: M4 Mac Mini, Local SQLite\n\n";
+
+    Benchmark::dd([
+        'Complete Dashboard' => fn() =>
+        app(SalesReportService::class)->dashboardReport('month'),
+
+        'Just Top Customers' => fn() =>
+        Order::completed()->forPeriod('month')->get()->topCustomers(),
+
+        'Just Business Summary' => fn() =>
+        Order::completed()->forPeriod('month')->get()->businessSummary(),
+
+        'Just Daily Breakdown' => fn() =>
+        Order::completed()->forPeriod('month')->get()->dailyBreakdown(),
+    ], iterations: 5);
+});
+
+Route::get('/explain', function () {
+    $query = Order::where('status', 'completed')
+        ->where('created_at', '>=', now()->subMonth());
+
+    $sql = $query->toSql();
+    $bindings = $query->getBindings();
+
+    $explainSql = 'EXPLAIN QUERY PLAN ' . $sql;
+    $result = DB::select($explainSql, $bindings);
+
+    return response()->json([
+        'query' => $sql,
+        'bindings' => $bindings,
+        'explain' => $result
+    ]);
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
