@@ -25,7 +25,7 @@ class LargeOrderDataSeeder extends Seeder
         $orderChunks = [];
         $chunkSize = 500;
 
-        for ($i = 0; $i < 10000; $i++) {
+        for ($i = 0; $i < 1000000; $i++) {
             $orderChunks[] = [
                 'user_id' => $users->random()->id,
                 'total' => fake()->randomFloat(2, 50, 2000),
