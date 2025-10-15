@@ -12,7 +12,7 @@ class OrderCollection extends Collection
         return $this->sum('total');
     }
 
-    public function averageOrderValue(): float
+    public function averageOrderValue()
     {
         return $this->avg('total');
     }
@@ -39,9 +39,15 @@ class OrderCollection extends Collection
 
     public function topCustomers(int $limit = 5): SupportCollection
     {
+        if (! $this->first()?->relationLoaded('user')) {
+            $this->loadMissing('user');
+        }
+
+        $users = $this->pluck('user')->keyBy('id');
+
         return $this->groupBy('user_id')
-            ->map(fn($orders) => [
-                'name' => $orders->first()->user->name,
+            ->map(fn($orders, $userId) => [
+                'name' => $users->get($userId)?->name ?? 'Unknown',
                 'total_spent' => $orders->sum('total'),
                 'order_count' => $orders->count()
             ])
