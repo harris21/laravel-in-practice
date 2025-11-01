@@ -6,16 +6,18 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Services\SalesReportService;
 use App\Services\FlexibleCacheService;
+use App\Services\MemoizedCacheService;
 use App\Services\OptimizedSalesReportService;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $service = match ($request->get('mode', 'cached')) {
+        $service = match ($request->get('mode', 'memoized')) {
             'original' => app(SalesReportService::class),
             'optimized' => app(OptimizedSalesReportService::class),
             'cached' => app(FlexibleCacheService::class),
+            'memoized' => app(MemoizedCacheService::class),
         };
 
         $report = $service->dashboardReport('month');

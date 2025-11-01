@@ -2,6 +2,8 @@
 
 use App\Models\Order;
 use App\Services\SalesReportService;
+use App\Services\FlexibleCacheService;
+use App\Services\OptimizedSalesReportService;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
@@ -55,6 +57,16 @@ Route::get('/explain', function () {
         'bindings' => $bindings,
         'explain' => $result
     ]);
+});
+
+Route::get('/test-memo-duplicate', function() {
+    $service = app(\App\Services\MemoizedCacheService::class);
+
+    $report1 = $service->dashboardReport('month');
+    $report2 = $service->dashboardReport('month');
+    $report3 = $service->dashboardReport('month');
+
+    return 'Check Telescope!';
 });
 
 Route::middleware(['auth'])->group(function () {
