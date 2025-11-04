@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Services\SalesReportService;
 use App\Services\FlexibleCacheService;
+use App\Services\MemoizedCacheService;
 use App\Services\OptimizedSalesReportService;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
@@ -59,14 +60,23 @@ Route::get('/explain', function () {
     ]);
 });
 
-Route::get('/test-memo-duplicate', function() {
-    $service = app(\App\Services\MemoizedCacheService::class);
+Route::get('/test-invalidation', function() {
+    $service = app(MemoizedCacheService::class);
+    $before = $service->dashboardReport('month');
 
-    $report1 = $service->dashboardReport('month');
-    $report2 = $service->dashboardReport('month');
-    $report3 = $service->dashboardReport('month');
+    Order::factory()->completed()->create([
+        'total' => 1000,
+        'created_at' => now()
+    ]);
 
-    return 'Check Telescope!';
+    $after = $service->dashboardReport('month');
+
+    return [
+        'before_total' => $before['summary']['total_revenue'],
+        'after_total' => $after['summary']['total_revenue'],
+        'increased_by' => $after['summary']['total_revenue'] - $before['summary']['total_revenue'],
+        'message' => 'Check Telescope to see ALL cache layers being cleared!'
+    ];
 });
 
 Route::middleware(['auth'])->group(function () {
