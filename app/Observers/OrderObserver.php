@@ -17,15 +17,15 @@ class OrderObserver
     public function created(Order $order)
     {
         if ($order->created_at->isToday()) {
-            $this->cacheService->clearDashboardCache('today');
+            $this->cacheService->refreshDashboardCache('today');
         }
 
         if ($order->created_at->isCurrentWeek()) {
-            $this->cacheService->clearDashboardCache('week');
+            $this->cacheService->refreshDashboardCache('week');
         }
 
         if ($order->created_at->isCurrentMonth()) {
-            $this->cacheService->clearDashboardCache('month');
+            $this->cacheService->refreshDashboardCache('month');
         }
     }
 

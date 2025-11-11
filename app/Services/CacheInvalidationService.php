@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Cache;
 
 class CacheInvalidationService
 {
+    private CacheInvalidationService $warmingService;
+
+    public function __construct(CacheWarmingService $cacheWarmingService)
+    {
+        $this->warmingService = $cacheWarmingService;
+    }
+
     public function clearDashboardCache(string $period = 'month')
     {
 
@@ -39,5 +46,17 @@ class CacheInvalidationService
         Cache::forget($dashboardKey);
         Cache::forget("illuminate:cache:flexible:created:{$dashboardKey}");
         Cache::forget("illuminate:cache:flexible:lock:{$dashboardKey}");
+    }
+
+    public function refreshDashboardCache(string $period = 'month')
+    {
+        $this->clearDashboardCache($period);
+        $this->warmingService->refreshDashboardCache($period);
+    }
+
+    public function refreshAllDashboardCaches()
+    {
+        $this->clearAllDashboardCaches();
+        $this->warmingService->warmAllDashboardCaches();
     }
 }

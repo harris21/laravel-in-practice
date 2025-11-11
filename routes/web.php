@@ -4,6 +4,7 @@ use App\Models\Order;
 use App\Services\SalesReportService;
 use App\Services\FlexibleCacheService;
 use App\Services\MemoizedCacheService;
+use App\Services\CacheInvalidationService;
 use App\Services\OptimizedSalesReportService;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
@@ -24,23 +25,25 @@ Route::get('/reports', [ReportsController::class, 'index'])
     ->middleware(['auth'])
     ->name('reports');
 
-Route::get('/benchmark', function () {
-    echo "Testing with " . Order::count() . " orders\n";
-    echo "Hardware: M4 Mac Mini, Local SQLite\n\n";
+Route::get('/test-cold-cache', function() {
+    $service = app(FlexibleCacheService::class);
+    $invalidator = app(CacheInvalidationService::class);
 
-    Benchmark::dd([
-        'Complete Dashboard' => fn() =>
-        app(SalesReportService::class)->dashboardReport('month'),
+    $warmTime = Benchmark::measure(function() use ($service) {
+        $service->dashboardReport('month');
+    });
 
-        'Just Top Customers' => fn() =>
-        Order::completed()->forPeriod('month')->get()->topCustomers(),
+    $invalidator->clearDashboardCache('month');
 
-        'Just Business Summary' => fn() =>
-        Order::completed()->forPeriod('month')->get()->businessSummary(),
+    $coldTime = Benchmark::measure(function() use ($service) {
+        $service->dashboardReport('month');
+    });
 
-        'Just Daily Breakdown' => fn() =>
-        Order::completed()->forPeriod('month')->get()->dailyBreakdown(),
-    ], iterations: 5);
+    return [
+        'warm_cache' => "{$warmTime}ms",
+        'cold_cache' => "{$coldTime}ms",
+        'difference' => round($coldTime / $warmTime) . 'x slower'
+    ];
 });
 
 Route::get('/explain', function () {
