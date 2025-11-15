@@ -6,11 +6,8 @@ use Illuminate\Support\Facades\Cache;
 
 class CacheInvalidationService
 {
-    private CacheInvalidationService $warmingService;
-
-    public function __construct(CacheWarmingService $cacheWarmingService)
+    public function __construct(private readonly CacheWarmingService $warmingService)
     {
-        $this->warmingService = $cacheWarmingService;
     }
 
     public function clearDashboardCache(string $period = 'month')
@@ -51,7 +48,7 @@ class CacheInvalidationService
     public function refreshDashboardCache(string $period = 'month')
     {
         $this->clearDashboardCache($period);
-        $this->warmingService->refreshDashboardCache($period);
+        $this->warmingService->warmDashboardCache($period);
     }
 
     public function refreshAllDashboardCaches()

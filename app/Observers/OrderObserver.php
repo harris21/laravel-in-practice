@@ -7,11 +7,8 @@ use App\Services\CacheInvalidationService;
 
 class OrderObserver
 {
-    private CacheInvalidationService $cacheService;
-
-    public function __construct(CacheInvalidationService $cacheService)
+    public function __construct(private readonly CacheInvalidationService $cacheService)
     {
-        $this->cacheService = $cacheService;
     }
 
     public function created(Order $order)

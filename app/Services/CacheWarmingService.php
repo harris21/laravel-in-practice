@@ -4,11 +4,8 @@ namespace App\Services;
 
 class CacheWarmingService
 {
-    private FlexibleCacheService $flexibleCacheService;
-
-    public function __construct(FlexibleCacheService $flexibleCacheService)
+    public function __construct(private readonly FlexibleCacheService $flexibleCacheService)
     {
-        $this->flexibleCacheService = $flexibleCacheService;
     }
 
     public function warmDashboardCache(string $period = 'month')
