@@ -19,6 +19,7 @@
     "require-dev": {
         "driftingly/rector-laravel": "^2.1",
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.18",
         "laravel/sail": "^1.41",
@@ -41,6 +42,7 @@
         }
     },
     "scripts": {
+        "phpstan": "vendor/bin/phpstan analyse --memory-limit=1G",
         "rector": "php -d memory_limit=-1 vendor/bin/rector process",
         "rector-dry": "php -d memory_limit=-1 vendor/bin/rector process --dry-run",
         "post-autoload-dump": [
@@ -64,6 +66,7 @@
         ],
         "test": [
             "@rector-dry",
+            "@phpstan",
             "@php artisan config:clear --ansi",
             "php -d memory_limit=512M artisan test"
         ]

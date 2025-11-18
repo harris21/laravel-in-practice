@@ -6,11 +6,15 @@ use App\Observers\OrderObserver;
 use App\Collections\OrderCollection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 
+/**
+ * @property-read  \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderItem> $items
+ */
 #[CollectedBy(OrderCollection::class)]
 #[ObservedBy([OrderObserver::class])]
 class Order extends Model
@@ -37,7 +41,10 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function items()
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<OrderItem>
+     */
+    public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
