@@ -4,10 +4,6 @@ use App\Models\User;
 use App\Models\Order;
 use App\Services\SalesReportService;
 
-beforeEach(function () {
-   $this->service = new SalesReportService();
-});
-
 it('generates the complete dashboard report', function () {
     $user = User::factory()->create([
         'name' => 'John Doe',
@@ -22,7 +18,7 @@ it('generates the complete dashboard report', function () {
             'created_at' => now()
         ]);
 
-    $report = $this->service->dashboardReport('month');
+    $report = (new SalesReportService())->dashboardReport('month');
 
 
     expect($report['summary'])

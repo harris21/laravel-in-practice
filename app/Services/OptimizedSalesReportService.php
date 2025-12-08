@@ -73,7 +73,7 @@ class OptimizedSalesReportService extends SalesReportService
             ->orderBy('date')
             ->get()
             ->map(fn($day) => [
-                'date' => \Carbon\Carbon::parse($day->date)->format('M j'),
+                'date' => \Illuminate\Support\Facades\Date::parse($day->date)->format('M j'),
                 'revenue' => (float) $day->revenue,
                 'orders' => (int) $day->orders
             ]);
@@ -98,7 +98,7 @@ class OptimizedSalesReportService extends SalesReportService
     private function getPeriodStart(string $period)
     {
         return match($period) {
-            'today' => now()->startOfDay(),
+            'today' => today(),
             'week' => now()->startOfWeek(),
             'month' => now()->startOfMonth(),
             default => now()->startOfMonth()

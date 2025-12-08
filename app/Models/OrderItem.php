@@ -26,13 +26,16 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Product, OrderItem>
+     */
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function getSubtotalAttribute(): float
+    protected function subtotal(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return $this->quantity * $this->price;
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: fn() => $this->quantity * $this->price);
     }
 }

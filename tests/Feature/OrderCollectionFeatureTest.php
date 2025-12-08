@@ -24,9 +24,10 @@ it('find top customers with relationships', function () {
 
     $topCustomers = $orders->topCustomers(2);
 
-    expect($topCustomers)->toHaveCount(2)
-        ->first()->name->toBe('John Doe')
-        ->first()->total_spent->toBe(300.0);
+    expect($topCustomers)->toHaveCount(2);
+
+    expect($topCustomers->first()['name'])->toBe('John Doe');
+    expect($topCustomers->first()['total_spent'])->toBe(300.0);
 });
 
 it('generates the daily breakdown from the database', function () {
