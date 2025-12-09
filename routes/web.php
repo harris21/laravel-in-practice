@@ -17,9 +17,7 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('dashboard');
+Route::get('/dashboard', \App\Livewire\Analytics\Dashboard::class)->middleware(['auth'])->name('dashboard');
 
 Route::get('/reports', [ReportsController::class, 'index'])
     ->middleware(['auth'])
