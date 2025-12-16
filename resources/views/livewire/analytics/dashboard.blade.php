@@ -1,5 +1,5 @@
 <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
-    <!-- Date Range Selector -->
+    <!-- Date Range Selector (from Episode 14) -->
     <div class="flex items-center justify-between">
         <flux:heading size="xl">Analytics Dashboard</flux:heading>
 
@@ -40,7 +40,52 @@
         </div>
     </div>
 
-    <!-- Stats Grid -->
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Revenue Chart -->
+        <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-zinc-900">
+            <flux:heading size="lg" class="mb-4">Revenue Trend</flux:heading>
+
+            <div
+                x-data="chartComponent({
+                    type: 'line',
+                    label: 'Revenue',
+                    labels: @js($chartData['labels']),
+                    data: @js($chartData['revenue']),
+                    color: 'rgb(59, 130, 246)',
+                    field: 'revenue'
+                })"
+                @charts-updated.window="updateChart($event.detail.chartData)"
+                wire:ignore
+                class="aspect-[2/1]"
+            >
+                <canvas x-ref="canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Orders Chart -->
+        <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-zinc-900">
+            <flux:heading size="lg" class="mb-4">Orders Count</flux:heading>
+
+            <div
+                x-data="chartComponent({
+                    type: 'bar',
+                    label: 'Orders',
+                    labels: @js($chartData['labels']),
+                    data: @js($chartData['orders']),
+                    color: 'rgb(34, 197, 94)',
+                    field: 'orders'
+                })"
+                @charts-updated.window="updateChart($event.detail.chartData)"
+                wire:ignore
+                class="aspect-[2/1]"
+            >
+                <canvas x-ref="canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid (from Episode 14) -->
     <div class="grid auto-rows-min gap-4 md:grid-cols-4">
         <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-zinc-900">
             <flux:text class="text-zinc-500 dark:text-zinc-400">Total Revenue</flux:text>
@@ -63,7 +108,7 @@
         </div>
     </div>
 
-    <!-- Recent Orders Table -->
+    <!-- Orders Table with Pagination (from Episode 14) -->
     <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-zinc-900">
         <flux:heading size="lg" class="mb-4">Recent Orders</flux:heading>
 
@@ -88,9 +133,56 @@
             </tbody>
         </table>
 
-        <!-- Pagination -->
         <div class="mt-4">
             {{ $orders->links() }}
         </div>
     </div>
 </div>
+
+@script
+<script>
+    Alpine.data('chartComponent', (config) => ({
+        chart: null,
+
+        init() {
+            this.createChart(config.labels, config.data);
+        },
+
+        createChart(labels, data) {
+            if (this.chart) {
+                this.chart.destroy();
+            }
+
+            this.chart = new Chart(this.$refs.canvas, {
+                type: config.type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: config.label,
+                        data: data,
+                        borderColor: config.color,
+                        backgroundColor: config.type === 'bar' ? config.color : (config.color + '20'),
+                        fill: config.type === 'line',
+                        tension: 0.4,
+                        borderRadius: config.type === 'bar' ? 4 : 0,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        },
+
+        updateChart(newData) {
+            this.createChart(newData.labels, newData[config.field]);
+        }
+    }));
+</script>
+@endscript
