@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Order;
+use Illuminate\Support\Facades\Cache;
 use App\Services\CacheInvalidationService;
 
 class OrderObserver
@@ -24,6 +25,10 @@ class OrderObserver
         if ($order->created_at->isCurrentMonth()) {
             $this->cacheService->refreshDashboardCache('month');
         }
+
+        Cache::forget('dashboard.charts.today');
+        Cache::forget('dashboard.charts.week');
+        Cache::forget('dashboard.charts.month');
     }
 
     public function updated(Order $order)

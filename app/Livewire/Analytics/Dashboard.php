@@ -7,6 +7,7 @@ use App\Models\Order;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Url;
+use Illuminate\Support\Facades\Cache;
 
 class Dashboard extends Component
 {
@@ -20,45 +21,51 @@ class Dashboard extends Component
         $this->dateRange = $range;
         $this->resetPage();
 
+        Cache::forget("dashboard.charts.{$this->dateRange}");
+
         $this->dispatch('charts-updated', chartData: $this->getChartData());
     }
 
     public function getChartData(): array
     {
-        $endDate = now()->endOfDay();
-        $startDate = match($this->dateRange) {
-            'today' => now()->startOfDay(),
-            'week' => now()->startOfWeek(),
-            'month' => now()->startOfMonth(),
-            default => now()->startOfMonth()
-        };
+        $cacheKey = "dashboard.charts.{$this->dateRange}";
 
-        $orders = Order::completed()
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->get();
+        return Cache::remember($cacheKey, 60, function () {
+            $endDate = now()->endOfDay();
+            $startDate = match($this->dateRange) {
+                'today' => now()->startOfDay(),
+                'week' => now()->startOfWeek(),
+                'month' => now()->startOfMonth(),
+                default => now()->startOfMonth()
+            };
 
-        $grouped = $orders->groupBy(fn($order) => $order->created_at->format('Y-m-d'));
+            $orders = Order::completed()
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->get();
 
-        $labels = [];
-        $revenueData = [];
-        $ordersData = [];
+            $grouped = $orders->groupBy(fn($order) => $order->created_at->format('Y-m-d'));
 
-        $period = Carbon::parse($startDate)->toPeriod($endDate);
+            $labels = [];
+            $revenueData = [];
+            $ordersData = [];
 
-        foreach ($period as $date) {
-            $dateStr = $date->format('Y-m-d');
-            $dayOrders = $grouped->get($dateStr, collect());
+            $period = Carbon::parse($startDate)->toPeriod($endDate);
 
-            $labels[] = $date->format('M j');
-            $revenueData[] = $dayOrders->sum('total');
-            $ordersData[] = $dayOrders->count();
-        }
+            foreach ($period as $date) {
+                $dateStr = $date->format('Y-m-d');
+                $dayOrders = $grouped->get($dateStr, collect());
 
-        return [
-            'labels' => $labels,
-            'revenue' => $revenueData,
-            'orders' => $ordersData,
-        ];
+                $labels[] = $date->format('M j');
+                $revenueData[] = $dayOrders->sum('total');
+                $ordersData[] = $dayOrders->count();
+            }
+
+            return [
+                'labels' => $labels,
+                'revenue' => $revenueData,
+                'orders' => $ordersData,
+            ];
+        });
     }
 
     public function getStatsProperty(): array
