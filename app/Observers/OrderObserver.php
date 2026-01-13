@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Order;
+use App\Events\OrderPlaced;
 use Illuminate\Support\Facades\Cache;
 use App\Services\CacheInvalidationService;
 
@@ -14,6 +15,8 @@ class OrderObserver
 
     public function created(Order $order)
     {
+        OrderPlaced::dispatch($order);
+
         if ($order->created_at->isToday()) {
             $this->cacheService->refreshDashboardCache('today');
         }

@@ -3,6 +3,15 @@
     <div class="flex items-center justify-between">
         <flux:heading size="xl">Analytics Dashboard</flux:heading>
 
+        @if($liveUpdateCount > 0)
+            <div class="flex items-center text-green-600 dark:text-green-400">
+                <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-2"></div>
+                <span class="text-sm">
+                    {{ $liveUpdateCount }} live {{ Str::plural('update', $liveUpdateCount) }}
+                </span>
+            </div>
+        @endif
+
         <div class="flex items-center gap-2">
             <flux:button
                 wire:click="updateDateRange('today')"
@@ -123,7 +132,18 @@
             </thead>
             <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
             @foreach($orders as $order)
-                <tr wire:key="order-{{ $order->id }}">
+                <tr
+                    wire:key="order-{{ $order->id }}"
+                    x-data="{ isNew: false }"
+                    @order-received.window="
+            if ($event.detail.order.id === {{ $order->id }}) {
+                isNew = true;
+                setTimeout(() => isNew = false, 3000);
+            }
+        "
+                    class="transition-all duration-500"
+                    :class="{ 'bg-green-50 dark:bg-green-900/20': isNew }"
+                >
                     <td class="py-3">#{{ $order->id }}</td>
                     <td class="py-3">{{ $order->user->name }}</td>
                     <td class="py-3">${{ number_format($order->total, 2) }}</td>
@@ -141,48 +161,65 @@
 
 @script
 <script>
-    Alpine.data('chartComponent', (config) => ({
-        chart: null,
+    Alpine.data('chartComponent', (config) => {
+        let chartInstance = null;
 
-        init() {
-            this.createChart(config.labels, config.data);
-        },
+        return {
+            init() {
+                this.createChart(config.labels, config.data);
+            },
 
-        createChart(labels, data) {
-            if (this.chart) {
-                this.chart.destroy();
-            }
+            createChart(labels, data) {
+                const canvas = this.$refs.canvas;
+                if (!canvas) return;
 
-            this.chart = new Chart(this.$refs.canvas, {
-                type: config.type,
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: config.label,
-                        data: data,
-                        borderColor: config.color,
-                        backgroundColor: config.type === 'bar' ? config.color : (config.color + '20'),
-                        fill: config.type === 'line',
-                        tension: 0.4,
-                        borderRadius: config.type === 'bar' ? 4 : 0,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.7
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
                 }
-            });
-        },
 
-        updateChart(newData) {
-            this.createChart(newData.labels, newData[config.field]);
-        }
-    }));
+                chartInstance = new Chart(canvas, {
+                    type: config.type,
+                    data: {
+                        labels: [...labels],
+                        datasets: [{
+                            label: config.label,
+                            data: [...data],
+                            borderColor: config.color,
+                            backgroundColor: config.type === 'bar' ? config.color : (config.color + '20'),
+                            fill: config.type === 'line',
+                            tension: 0.4,
+                            borderRadius: config.type === 'bar' ? 4 : 0,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            },
+
+            updateChart(newData) {
+                if (!newData || !newData.labels) return;
+
+                const labels = [...newData.labels];
+                const data = [...newData[config.field]];
+
+                if (chartInstance) {
+                    chartInstance.data.labels = labels;
+                    chartInstance.data.datasets[0].data = data;
+                    chartInstance.update();
+                } else {
+                    this.createChart(labels, data);
+                }
+            }
+        };
+    });
 </script>
 @endscript
