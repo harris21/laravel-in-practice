@@ -4,8 +4,8 @@ namespace App\Livewire\Analytics;
 
 use App\Models\Order;
 use Carbon\Carbon;
-use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,21 +17,19 @@ class Dashboard extends Component
     #[Url]
     public string $dateRange = 'month';
 
-    public int $liveUpdateCount = 0;
-
     #[On('echo:orders,.order.placed')]
     public function handleNewOrder(array $payload): void
     {
-        $this->liveUpdateCount++;
-
         Cache::forget("dashboard.charts.{$this->dateRange}");
 
         $chartData = $this->fetchChartData();
         Cache::put("dashboard.charts.{$this->dateRange}", $chartData, 60);
 
         $this->dispatch('charts-updated', chartData: $chartData);
+        $this->dispatch('stats-updated', stats: $this->stats);
         $this->dispatch('order-received', order: $payload['order']);
 
+        $this->skipRender();
     }
 
     public function updateDateRange(string $range): void
